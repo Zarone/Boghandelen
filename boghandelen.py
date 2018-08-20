@@ -91,7 +91,7 @@ class Boghandelen(tk.Frame):
             self.update_economy()
         
         #Call again in 3 seconds
-        self.after(300, self.update_customer)
+        self.after(3000, self.update_customer)
 
      
     #This function acts as a transaction factory
