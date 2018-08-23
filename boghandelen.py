@@ -144,8 +144,10 @@ class Boghandelen(tk.Frame):
         topInfoFrame.pack(side=tk.BOTTOM)
         
         #Left buttonpanel
-        butSalary = tk.Button(leftFrame, text='Vis ansatte', command=self.show_employees, width=int(70*self.scale))
-        butSalary.pack(fill = tk.X)
+        btnShowEmployees = tk.Button(leftFrame, text='Vis ansatte', command=self.show_employees, width=int(70*self.scale))
+        btnShowEmployees.pack(fill = tk.X)
+        btnAddEmployees = tk.Button(leftFrame, text='Tilføj ansatte', command=self.add_employee, width=int(70*self.scale))
+        btnAddEmployees.pack(fill = tk.X)
         self.lblMoney = tk.Label(leftFrame, text='Aktuel bundlinje: {}'.format(self.get_total_accounting_value()))
         self.lblMoney.pack(fill=tk.X)
         self.lblTotalBookCount = tk.Label(leftFrame, text='Antal bøger på lager: {}'.format(self.stock.get_total_item_count()))
@@ -241,6 +243,32 @@ class Boghandelen(tk.Frame):
         b = tk.Button(dlg, text='OK', command=dlg.destroy)
         b.pack()
         dlg.mainloop()
+    
+    def add_employee(self):
+        def confirm():
+            name = nameEntry.get()
+            salery = int(saleryEntry.get())
+            
+            employee = Employee(name, salery)
+            
+            self.employees.append(employee)
+            print(employee)
+            dlg.destroy()
+        
+        
+        dlg = tk.Toplevel()
+        dlg.grid()
+        dlg.title('Tilføj ansatte')
+        nameLbl = tk.Label(dlg, text='Navn: ')
+        nameLbl.grid(row=1, column=1)
+        nameEntry = tk.Entry(dlg)
+        nameEntry.grid(row=1, column=2)
+        saleryLbl = tk.Label(dlg, text='Løn: ')
+        saleryLbl.grid(row=2, column=1)
+        saleryEntry = tk.Entry(dlg)
+        saleryEntry.grid(row=2, column=2)
+        addBtn = tk.Button(dlg, text='Tilføj', command=confirm)
+        addBtn.grid(row=3, column=2)
     
     def show_book_info(self, evt):
         sel = self.lbBooks.curselection()
