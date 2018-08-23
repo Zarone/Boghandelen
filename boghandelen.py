@@ -247,7 +247,22 @@ class Boghandelen(tk.Frame):
     def add_employee(self):
         def confirm():
             name = nameEntry.get()
-            salery = int(saleryEntry.get())
+            if name == '':
+                return self.error('Navn er ikke intastet')
+            if any(char.isdigit() for char in name):
+                return self.error('Ikke et validt navn')
+                
+            salery = saleryEntry.get()
+            if salery == '':
+                return self.error('Løn er ikke intastet')
+            
+            try:
+                salery = float(salery)
+            except ValueError:
+                return self.error('Løn er ikke en talværdi')
+            
+            if salery < 0:
+                return self.error('Løn må ikke være mindre end 0')
             
             employee = Employee(name, salery)
             
@@ -266,9 +281,17 @@ class Boghandelen(tk.Frame):
         saleryLbl = tk.Label(dlg, text='Løn: ')
         saleryLbl.grid(row=2, column=1)
         saleryEntry = tk.Entry(dlg)
+        saleryEntry.insert(0, '0')
         saleryEntry.grid(row=2, column=2)
         addBtn = tk.Button(dlg, text='Tilføj', command=confirm)
         addBtn.grid(row=3, column=2)
+        
+    def error(self, message):
+        dlg = tk.Toplevel()
+        msgLbl = tk.Label(dlg, text=message)
+        msgLbl.pack()
+        okBtn = tk.Button(dlg, text='OK', command=dlg.destroy)
+        okBtn.pack(side = tk.BOTTOM)
     
     def show_book_info(self, evt):
         sel = self.lbBooks.curselection()
