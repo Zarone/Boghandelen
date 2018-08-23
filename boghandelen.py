@@ -234,15 +234,63 @@ class Boghandelen(tk.Frame):
     def log_message(self, message):
         self.console.insert(tk.END, message)
         self.console.see('end')
+        
+    def error(self, message):
+        dlg = tk.Toplevel()
+        msgLbl = tk.Label(dlg, text=message)
+        msgLbl.pack()
+        okBtn = tk.Button(dlg, text='OK', command=dlg.destroy)
+        okBtn.pack(side = tk.BOTTOM)
    
     def show_employees(self):
-        dlg = tk.Toplevel(height=200, width=400)
+        dlg = tk.Toplevel()
         dlg.title('Ansatte')
-        lbl = tk.Label(dlg, text='Endnu ikke implementeret', width=int(200*self.scale))
-        lbl.pack()
+        
+        
+        scrollbar_c = tk.Scrollbar(dlg, orient=tk.VERTICAL)
+        scrollbar_c.config(command=self.lbCategories.yview)
+        scrollbar_c.pack(side=tk.RIGHT, fill=tk.Y)
+        employeeList = tk.Listbox(dlg, yscrollcommand=scrollbar_c.set)
+        infoLbl = tk.Label(dlg, text='Ingen valgt ansat')
+        
+        
+        def show_info(env):
+            sel = employeeList.curselection()
+            if len(sel) > 0:
+                id = int(employeeList.get(sel[0]).split(':')[0])
+                employee = self.get_employee_by_id(id)
+                # Kan godt regne med at den altid retunerer en ansat, men tjekker alligevel.
+                if employee == None:
+                    return self.error('Kunne ikke finde den ansatte')
+            
+                infoLbl.config(text=str(employee))
+        
+        employeeList.bind('<<ListboxSelect>>', show_info)
+        for employee in self.employees:
+            employeeList.insert(tk.END, str(employee.employeeId) + ':' + employee.name)
+        
+        
+        employeeList.pack()
+        infoLbl.pack()
         b = tk.Button(dlg, text='OK', command=dlg.destroy)
         b.pack()
         dlg.mainloop()
+    
+    def get_employee_by_id(self, employeeId):
+        for employee in self.employees:
+            if employee.employeeId == employeeId:
+                return employee
+        
+        return None
+        
+    def update_employee_information(self, evt):
+        sel = self.lbCategories.curselection()
+        if len(sel) > 0:
+            group = self.lbCategories.get(sel[0])
+            titles = self.stock.get_item_list(group)
+            self.lbBooks.delete(0,tk.END)
+            for t in titles:
+                self.lbBooks.insert(tk.END, t)
     
     def add_employee(self):
         def confirm():
@@ -257,7 +305,7 @@ class Boghandelen(tk.Frame):
                 return self.error('Løn er ikke intastet')
             
             try:
-                salery = float(salery)
+                salery = int(salery)
             except ValueError:
                 return self.error('Løn er ikke en talværdi')
             
@@ -284,13 +332,6 @@ class Boghandelen(tk.Frame):
         saleryEntry.grid(row=2, column=2)
         addBtn = tk.Button(dlg, text='Tilføj', command=confirm)
         addBtn.grid(row=3, column=2)
-        
-    def error(self, message):
-        dlg = tk.Toplevel()
-        msgLbl = tk.Label(dlg, text=message)
-        msgLbl.pack()
-        okBtn = tk.Button(dlg, text='OK', command=dlg.destroy)
-        okBtn.pack(side = tk.BOTTOM)
     
     def show_book_info(self, evt):
         sel = self.lbBooks.curselection()
