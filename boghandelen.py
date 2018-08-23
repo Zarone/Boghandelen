@@ -267,7 +267,6 @@ class Boghandelen(tk.Frame):
             employee = Employee(name, salery)
             
             self.employees.append(employee)
-            print(employee)
             dlg.destroy()
         
         
