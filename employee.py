@@ -16,7 +16,14 @@ class Employee:
             totalSalary += paycheck.amount
         
         return 'Id: ' + str(self.employeeId) + '\nNavn: ' + self.name + '\nLøn: ' + str(self.salary) + '\nUdbetalt ialt: ' + str(totalSalary)
+    
+    def total_salary(self):
+        totalSalary = 0
+        for paycheck in self.paychecks:
+            totalSalary += paycheck.amount
         
+        return totalSalary
+    
     @classmethod    
     def get_next_id(cls):
         cls.ID_COUNT += 1

@@ -246,13 +246,30 @@ class Boghandelen(tk.Frame):
         dlg = tk.Toplevel()
         dlg.title('Ansatte')
         
-        
-        scrollbar_c = tk.Scrollbar(dlg, orient=tk.VERTICAL)
-        scrollbar_c.config(command=self.lbCategories.yview)
-        scrollbar_c.pack(side=tk.RIGHT, fill=tk.Y)
-        employeeList = tk.Listbox(dlg, yscrollcommand=scrollbar_c.set)
+        employeeList = tk.Listbox(dlg)
         infoLbl = tk.Label(dlg, text='Ingen valgt ansat')
         
+        idLbl = tk.Label(dlg, text='Id')
+        idValueLbl = tk.Label(dlg)
+        nameLbl = tk.Label(dlg, text='Navn')
+        nameValueLbl = tk.Label(dlg)
+        salaryLbl = tk.Label(dlg, text='Løn')
+        salaryValueLbl = tk.Spinbox(dlg, from_=0, to=40000)
+        totalSalaryLbl = tk.Label(dlg, text='Udbetalt ialt')
+        totalSalaryValueLbl = tk.Label(dlg)
+        
+        def hide_info():
+            infoLbl.grid(row=2,column=1)
+            idLbl.grid_forget()
+            idValueLbl.grid_forget()
+            nameLbl.grid_forget()
+            nameValueLbl.grid_forget()
+            salaryLbl.grid_forget()
+            salaryValueLbl.grid_forget()
+            totalSalaryLbl.grid_forget()
+            totalSalaryValueLbl.grid_forget()
+    
+        hide_info()
         
         def show_info(env):
             sel = employeeList.curselection()
@@ -262,18 +279,31 @@ class Boghandelen(tk.Frame):
                 # Kan godt regne med at den altid retunerer en ansat, men tjekker alligevel.
                 if employee == None:
                     return self.error('Kunne ikke finde den ansatte')
-            
-                infoLbl.config(text=str(employee))
+                
+                idValueLbl.config(text=employee.employeeId)
+                nameValueLbl.config(text=employee.name)
+                salaryValueLbl.insert(0, employee.salary)
+                totalSalaryValueLbl.config(text=employee.total_salary())
+                
+                infoLbl.grid_forget()
+                idLbl.grid(row=2,column=1)
+                idValueLbl.grid(row=2,column=2)
+                nameLbl.grid(row=3,column=1)
+                nameValueLbl.grid(row=3,column=2)
+                salaryLbl.grid(row=4,column=1)
+                salaryValueLbl.grid(row=4,column=2)
+                totalSalaryLbl.grid(row=5,column=1)
+                totalSalaryValueLbl.grid(row=5,column=2)
         
         employeeList.bind('<<ListboxSelect>>', show_info)
         for employee in self.employees:
             employeeList.insert(tk.END, str(employee.employeeId) + ':' + employee.name)
         
-        
-        employeeList.pack()
-        infoLbl.pack()
-        b = tk.Button(dlg, text='OK', command=dlg.destroy)
-        b.pack()
+        employeeList.grid(row=1,column=1,columnspan=2,sticky='N E W')
+        okBtn = tk.Button(dlg, text='OK', command=dlg.destroy)
+        okBtn.grid(row=6,column=1, sticky='W')
+        cancelBtn = tk.Button(dlg, text='Fortryd', command=dlg.destroy)
+        cancelBtn.grid(row=6,column=2,sticky='E')
         dlg.mainloop()
     
     def get_employee_by_id(self, employeeId):
