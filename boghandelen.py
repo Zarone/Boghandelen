@@ -249,12 +249,14 @@ class Boghandelen(tk.Frame):
         employeeList = tk.Listbox(dlg)
         infoLbl = tk.Label(dlg, text='Ingen valgt ansat')
         
+        salaryVar = tk.StringVar(dlg)
+        
         idLbl = tk.Label(dlg, text='Id')
         idValueLbl = tk.Label(dlg)
         nameLbl = tk.Label(dlg, text='Navn')
         nameValueLbl = tk.Label(dlg)
         salaryLbl = tk.Label(dlg, text='Løn')
-        salaryValueLbl = tk.Spinbox(dlg, from_=0, to=40000)
+        salaryValueEntry = tk.Spinbox(dlg, from_=0, to=40000, textvariable=salaryVar)
         totalSalaryLbl = tk.Label(dlg, text='Udbetalt ialt')
         totalSalaryValueLbl = tk.Label(dlg)
         
@@ -265,9 +267,33 @@ class Boghandelen(tk.Frame):
             nameLbl.grid_forget()
             nameValueLbl.grid_forget()
             salaryLbl.grid_forget()
-            salaryValueLbl.grid_forget()
+            salaryValueEntry.grid_forget()
             totalSalaryLbl.grid_forget()
             totalSalaryValueLbl.grid_forget()
+            
+        def update_info():
+            sel = employeeList.curselection()
+            if len(sel) > 0:
+                id = int(employeeList.get(sel[0]).split(':')[0])
+                employee = self.get_employee_by_id(id)
+                # Kan godt regne med at den altid retunerer en ansat, men tjekker alligevel.
+                if employee == None:
+                    return self.error('Kunne ikke finde den ansatte')
+                           
+                salary = salaryVar.get()
+                if salary == '':
+                    return self.error('Løn er ikke intastet')
+            
+                try:
+                    salary = int(salary)
+                except ValueError:
+                        return self.error('Løn er ikke en talværdi')
+            
+                if salary < 0:
+                    return self.error('Løn må ikke være mindre end 0')
+                
+                employee.salary = salary
+                dlg.destroy()
     
         hide_info()
         
@@ -282,7 +308,7 @@ class Boghandelen(tk.Frame):
                 
                 idValueLbl.config(text=employee.employeeId)
                 nameValueLbl.config(text=employee.name)
-                salaryValueLbl.insert(0, employee.salary)
+                salaryVar.set(str(employee.salary))
                 totalSalaryValueLbl.config(text=employee.total_salary())
                 
                 infoLbl.grid_forget()
@@ -291,7 +317,7 @@ class Boghandelen(tk.Frame):
                 nameLbl.grid(row=3,column=1)
                 nameValueLbl.grid(row=3,column=2)
                 salaryLbl.grid(row=4,column=1)
-                salaryValueLbl.grid(row=4,column=2)
+                salaryValueEntry.grid(row=4,column=2)
                 totalSalaryLbl.grid(row=5,column=1)
                 totalSalaryValueLbl.grid(row=5,column=2)
         
@@ -300,7 +326,7 @@ class Boghandelen(tk.Frame):
             employeeList.insert(tk.END, str(employee.employeeId) + ':' + employee.name)
         
         employeeList.grid(row=1,column=1,columnspan=2,sticky='N E W')
-        okBtn = tk.Button(dlg, text='OK', command=dlg.destroy)
+        okBtn = tk.Button(dlg, text='OK', command=update_info)
         okBtn.grid(row=6,column=1, sticky='W')
         cancelBtn = tk.Button(dlg, text='Fortryd', command=dlg.destroy)
         cancelBtn.grid(row=6,column=2,sticky='E')
@@ -330,19 +356,19 @@ class Boghandelen(tk.Frame):
             if any(char.isdigit() for char in name):
                 return self.error('Ikke et validt navn')
                 
-            salery = saleryEntry.get()
-            if salery == '':
+            salary = saleryEntry.get()
+            if salary == '':
                 return self.error('Løn er ikke intastet')
             
             try:
-                salery = int(salery)
+                salary = int(salary)
             except ValueError:
                 return self.error('Løn er ikke en talværdi')
             
-            if salery < 0:
+            if salary < 0:
                 return self.error('Løn må ikke være mindre end 0')
             
-            employee = Employee(name, salery)
+            employee = Employee(name, salary)
             
             self.employees.append(employee)
             dlg.destroy()
