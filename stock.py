@@ -55,6 +55,11 @@ class Stock:
                 res = i
         return res
     
+    def get_random_item(self):
+        index = randint(0,len(self.inventory)-1)
+        item = self.inventory[index]
+        return item
+    
     def get_random_item_for_sale(self):
         index = randint(0,len(self.inventory)-1)
         item = self.inventory[index]
