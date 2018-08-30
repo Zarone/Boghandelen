@@ -193,6 +193,8 @@ class Boghandelen(tk.Frame):
         self.lbBooks.bind('<<ListboxSelect>>', self.show_book_info)
         self.lbBooks.pack(side=tk.LEFT, fill=tk.BOTH)
         
+        self.lblBookAuthor = tk.Label(topInfoFrame, text='Forfatter: ' , width=int(300*self.scale), justify=tk.LEFT)
+        self.lblBookAuthor.pack(side=tk.BOTTOM)
         self.lblBookSales = tk.Label(topInfoFrame, text='Antal solgte: ', width=int(300*self.scale), justify=tk.LEFT)
         self.lblBookSales.pack(side=tk.BOTTOM)
         self.lblBookCount = tk.Label(topInfoFrame, text='Antal på lager: ', width=int(300*self.scale), justify=tk.LEFT)
@@ -236,9 +238,6 @@ class Boghandelen(tk.Frame):
                     self.log_message('Auto indkøb, ' + str(totalBought) + ' bøger købt, kostede ' + str(totalSpent) + ' kr\n')
                 else:
                     self.log_message('Auto indkøb, ' + str(totalBought) + ' bog købt, kostede ' + str(totalSpent) + ' kr\n')
-                
-                
-                
     
     def purchase_current(self):
         def confirm_purchase():
@@ -439,7 +438,7 @@ class Boghandelen(tk.Frame):
             self.lblBookPrice.config(text='Pris: {}'.format(salesItem.price))
             self.lblBookCount.config(text='Antal på lager: {}'.format(salesItem.stockCount))
             self.lblBookSales.config(text='Antal solgt: {}'.format(salesItem.sales))
-            #self.lblBookSales.config(text='Antal solgte: {}'.format(salesItem.sales))
+            self.lblBookAuthor.config(text='Forfatter: {}'.format(salesItem.author))
 
     def update_book_list(self, evt):
         sel = self.lbCategories.curselection()

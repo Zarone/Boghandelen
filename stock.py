@@ -2,6 +2,7 @@
 from salesItem import SalesItem
 from random import randint
 import csv
+import ast
 
 class Stock:
     
@@ -87,7 +88,21 @@ class Stock:
                     price = int(book['list_price'])
                 except:
                     pass
-                s = SalesItem(book['uniq_id'], book['name'], book['group'], price)
+                
+                descripion = None
+                try:
+                    description = ast.literal_eval(book['desc'].replace('=>', ':'))['Description']
+                except:
+                    pass
+                
+                author = None
+                try:
+                    author = description['Authored By']
+                except:
+                    pass
+                    
+                
+                s = SalesItem(book['uniq_id'], book['name'], book['group'], price, author)
                 self.inventory.append(s)
                 if randint(0,10) < 1:
                     s.stockCount = randint(1,20)            

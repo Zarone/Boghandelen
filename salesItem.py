@@ -2,10 +2,11 @@
 class SalesItem:
     
     
-    def __init__(self, itemId, name, group, price):
+    def __init__(self, itemId, name, group, price, author):
         self.itemId = itemId
         self.name = name
         self.itemGroup = group
+        self.author = author
         #The price is the price to purchase the books.
         #Books are later sold at a markup
         self.price = price
@@ -17,5 +18,5 @@ class SalesItem:
     
     @classmethod
     def copy(cls, c):
-        s = SalesItem(c.itemId, c.name, c.itemGroup, c.price)
+        s = SalesItem(c.itemId, c.name, c.itemGroup, c.price, c.author)
         return s
