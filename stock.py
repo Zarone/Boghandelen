@@ -16,7 +16,6 @@ class Stock:
         return set(itemGroupList)
     
     def get_item_list(self, itemGroup):
-        print(itemGroup)
         itemList = []
         for i in self.inventory:
             if i.itemGroup == itemGroup:
