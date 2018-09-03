@@ -10,13 +10,6 @@ class Employee:
         self.salary = salary
         self.employeeId = self.get_next_id()
         
-    def __str__(self):
-        totalSalary = 0
-        for paycheck in self.paychecks:
-            totalSalary += paycheck.amount
-        
-        return 'Id: ' + str(self.employeeId) + '\nNavn: ' + self.name + '\nLøn: ' + str(self.salary) + '\nUdbetalt ialt: ' + str(totalSalary)
-    
     def total_salary(self):
         totalSalary = 0
         for paycheck in self.paychecks:

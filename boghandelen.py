@@ -21,7 +21,6 @@ class Boghandelen(tk.Frame):
         
         self.markup = tk.DoubleVar()
         self.markup.set(1.3)
-            
         
         #Add two initial employees
         self.employees = []
@@ -87,6 +86,7 @@ class Boghandelen(tk.Frame):
             sale.finalize(self.markup.get())
             if sale.transaction.amount > 0:
                 self.log_message('{}: En kunde købte bøger for {:d} kr\n'.format(sale.transaction.transactionId, int(sale.transaction.amount)))
+                self.auto_restock()
                 
             self.update_economy()
         
@@ -101,7 +101,6 @@ class Boghandelen(tk.Frame):
         t = Transaction(transactiontype, amount)
         self.accounting.append(t)
         return t
-
 
     def get_total_accounting_value(self):
         value = 0
@@ -156,6 +155,17 @@ class Boghandelen(tk.Frame):
         self.slMarkup = tk.Scale(leftFrame, label=None, resolution=0.1, orient=tk.HORIZONTAL, from_=0, to=2, variable=self.markup)
         self.slMarkup.pack(fill = tk.X)
         
+        
+        restockLbl = tk.Label(leftFrame, text='Auto indkøb')
+        restockLbl.pack(fill=tk.X)
+        self.autoRestock = tk.Spinbox(leftFrame, from_=1, to=10000)
+        self.autoRestock.pack(side=tk.LEFT)
+        
+        self.activate_auto_restock = tk.IntVar()
+        
+        activateAutoRestock = tk.Checkbutton(leftFrame,command=self.auto_restock,variable=self.activate_auto_restock)
+        activateAutoRestock.pack(side=tk.RIGHT)
+        
         self.console = tk.Text(rightFrame, width=int(430*self.scale))
         self.console.pack()
         
@@ -183,6 +193,8 @@ class Boghandelen(tk.Frame):
         self.lbBooks.bind('<<ListboxSelect>>', self.show_book_info)
         self.lbBooks.pack(side=tk.LEFT, fill=tk.BOTH)
         
+        self.lblBookAuthor = tk.Label(topInfoFrame, text='Forfatter: ' , width=int(300*self.scale), justify=tk.LEFT)
+        self.lblBookAuthor.pack(side=tk.BOTTOM)
         self.lblBookSales = tk.Label(topInfoFrame, text='Antal solgte: ', width=int(300*self.scale), justify=tk.LEFT)
         self.lblBookSales.pack(side=tk.BOTTOM)
         self.lblBookCount = tk.Label(topInfoFrame, text='Antal på lager: ', width=int(300*self.scale), justify=tk.LEFT)
@@ -195,6 +207,37 @@ class Boghandelen(tk.Frame):
         self.butPurchase.pack(side=tk.BOTTOM)
         
         self.update_book_list(None)
+    
+    def auto_restock(self):
+        if self.activate_auto_restock.get() == 1:
+            total = self.stock.get_total_item_count()
+            minimum = int(self.autoRestock.get())
+            
+            totalBought = 0
+            totalSpent = 0
+            
+            while total < minimum:
+                salesItem = self.stock.get_random_item()
+                
+                salesItem.stockCount += 1
+                t = self.get_transaction(Transaction.STOCK_PURCHASE)
+                
+                t.amount = salesItem.price
+                t.state = Transaction.ST_READY
+                
+                totalBought += 1
+                totalSpent += t.amount
+                
+                total += 1
+            
+            if totalBought > 0:
+                self.show_book_info(None)
+                self.update_economy()
+                
+                if totalBought != 1:
+                    self.log_message('Auto indkøb, ' + str(totalBought) + ' bøger købt, kostede ' + str(totalSpent) + ' kr\n')
+                else:
+                    self.log_message('Auto indkøb, ' + str(totalBought) + ' bog købt, kostede ' + str(totalSpent) + ' kr\n')
     
     def purchase_current(self):
         def confirm_purchase():
@@ -229,7 +272,6 @@ class Boghandelen(tk.Frame):
                 e = tk.Label(dlg, text='Bestil eksemplarer af: ' + salesItem.name)
                 e.pack(side=tk.BOTTOM)
                 dlg.mainloop()
-        
     
     def log_message(self, message):
         self.console.insert(tk.END, message)
@@ -373,7 +415,6 @@ class Boghandelen(tk.Frame):
             self.employees.append(employee)
             dlg.destroy()
         
-        
         dlg = tk.Toplevel()
         dlg.grid()
         dlg.title('Tilføj ansatte')
@@ -397,7 +438,7 @@ class Boghandelen(tk.Frame):
             self.lblBookPrice.config(text='Pris: {}'.format(salesItem.price))
             self.lblBookCount.config(text='Antal på lager: {}'.format(salesItem.stockCount))
             self.lblBookSales.config(text='Antal solgt: {}'.format(salesItem.sales))
-            #self.lblBookSales.config(text='Antal solgte: {}'.format(salesItem.sales))
+            self.lblBookAuthor.config(text='Forfatter: {}'.format(salesItem.author))
 
     def update_book_list(self, evt):
         sel = self.lbCategories.curselection()
@@ -407,7 +448,6 @@ class Boghandelen(tk.Frame):
             self.lbBooks.delete(0,tk.END)
             for t in titles:
                 self.lbBooks.insert(tk.END, t)
-                
                 
 app = Boghandelen()
 
