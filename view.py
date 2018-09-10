@@ -1,127 +1,24 @@
 # -*- coding: utf-8 -*-
 import tkinter as tk
-from stock import Stock
-from salesEvent import SalesEvent
 from transaction import Transaction
-from employee import Employee
-from random import randint
-from random import random
-from math import exp
+from fpdf import FPDF
+from model import Model
+from controller import Controller
 
-class Boghandelen(tk.Frame):
+class View(tk.Frame):
     
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
         self.grid()  
         
-        self.accounting = []
-        
-        self.stock = Stock()
-        self.stock.build_initial_stock()
-        
-        self.markup = tk.DoubleVar()
-        self.markup.set(1.3)
-        
-        #Add two initial employees
-        self.employees = []
-        e1 = Employee("John", 500)
-        self.employees.append(e1)
-        e2 = Employee("Jane", 500)
-        self.employees.append(e2)
+        self.model = Model()
+        self.controller = Controller(self)
 
-        
         self.scale = float(1)/6
         self.build_GUI()
-        
-        #Start the timed events for the simulation
-        self.after(3000, self.update_customer)
-        self.after(20000, self.update_payday)
-        self.after(100, self.proces_transactions)
-        self.update_economy()
-        
-    def update_economy(self):
-        self.lblMoney.config(text='Aktuel bundlinje: {:8d}'.format(int(self.get_total_accounting_value())))
-        self.lblTotalBookCount.config(text='Antal bøger på lager: {}'.format(self.stock.get_total_item_count()))
-        
-        #Call again in 10 s
-        self.after(10000, self.update_economy)
-        
-    def proces_transactions(self):
-        #Search for an unfinished transaction
-        for t in self.accounting:
-            if t.state == Transaction.ST_READY:
-                t.state = Transaction.ST_COMPLETE
-        #Call again in 100 ms
-        self.after(100, self.proces_transactions)
-        
-    def update_payday(self):
-        total = 0
-        for em in self.employees:
-            t = self.get_transaction(Transaction.EMPLOYEE_SALARY, em.salary)
-            t.state = Transaction.ST_READY
-            total += em.salary
-            em.paychecks.append(t)
-        
-        self.log_message('Lønudbetaling: {} kr\n'.format(total))
-        self.update_economy()
-        #Call again in 20 seconds
-        self.after(20000, self.update_payday)
-         
-    def update_customer(self):
-        #Everytime this function is called, we can 
-        #simulate a customer.
-        #The lower the markup, the more customers visit the store
-        s = 1/(1+exp(3*self.markup.get()-6))
-        if random() < s:
-            sale = SalesEvent(self.get_transaction(Transaction.CUSTOMER_PURCHASE))
-            
-            #Buy between 1 and n books
-            #n=2*number of employees => More workers, more chance
-            #for customers to find the book they want..
-            for i in range(randint(1,2*len(self.employees))):            
-                item = self.stock.get_random_item_for_sale()
-                if item != None:
-                    sale.add_item(item)
-                
-            sale.finalize(self.markup.get())
-            if sale.transaction.amount > 0:
-                self.log_message('{}: En kunde købte bøger for {:d} kr\n'.format(sale.transaction.transactionId, int(sale.transaction.amount)))
-                self.auto_restock()
-                
-            self.update_economy()
-        
-        #Call again in 3 seconds
-        self.after(3000, self.update_customer)
+        self.controller.post_gui()
 
-     
-    #This function acts as a transaction factory
-    #All transactions should come from here,
-    #to ensure correct processing
-    def get_transaction(self, transactiontype, amount = 0):
-        t = Transaction(transactiontype, amount)
-        self.accounting.append(t)
-        return t
-
-    def get_total_accounting_value(self):
-        value = 0
-        for a in self.accounting:
-            if a.state == Transaction.ST_COMPLETE:
-                if a.transactionType == Transaction.CUSTOMER_PURCHASE:
-                    #Customer purchases are added to the value
-                    value += a.amount
-                elif a.transactionType == Transaction.EMPLOYEE_SALARY:
-                    #Salaries are subtracted
-                    value -= a.amount
-                elif a.transactionType == Transaction.CUSTOMER_RETURN:
-                    #Returns are also subtracted
-                    value -= a.amount
-                elif a.transactionType == Transaction.STOCK_PURCHASE:
-                    #Stock purchases are also subtracted
-                    value -= a.amount
-        return value
-    
     def build_GUI(self):
-        
         bottomFrame = tk.Frame(self)
         bottomFrame.pack(side = tk.BOTTOM)
         
@@ -147,23 +44,20 @@ class Boghandelen(tk.Frame):
         btnShowEmployees.pack(fill = tk.X)
         btnAddEmployees = tk.Button(leftFrame, text='Tilføj ansatte', command=self.add_employee, width=int(70*self.scale))
         btnAddEmployees.pack(fill = tk.X)
-        self.lblMoney = tk.Label(leftFrame, text='Aktuel bundlinje: {}'.format(self.get_total_accounting_value()))
+        self.lblMoney = tk.Label(leftFrame, text='Aktuel bundlinje: {}'.format(self.model.get_total_accounting_value()))
         self.lblMoney.pack(fill=tk.X)
-        self.lblTotalBookCount = tk.Label(leftFrame, text='Antal bøger på lager: {}'.format(self.stock.get_total_item_count()))
+        self.lblTotalBookCount = tk.Label(leftFrame, text='Antal bøger på lager: {}'.format(self.model.stock.get_total_item_count()))
         self.lblTotalBookCount.pack(fill=tk.X)
         
-        self.slMarkup = tk.Scale(leftFrame, label=None, resolution=0.1, orient=tk.HORIZONTAL, from_=0, to=2, variable=self.markup)
+        self.slMarkup = tk.Scale(leftFrame, label=None, resolution=0.1, orient=tk.HORIZONTAL, from_=0, to=2, variable=self.model.markup)
         self.slMarkup.pack(fill = tk.X)
-        
         
         restockLbl = tk.Label(leftFrame, text='Auto indkøb')
         restockLbl.pack(fill=tk.X)
         self.autoRestock = tk.Spinbox(leftFrame, from_=1, to=10000)
-        self.autoRestock.pack(side=tk.LEFT)
+        self.autoRestock.pack(side=tk.LEFT)    
         
-        self.activate_auto_restock = tk.IntVar()
-        
-        activateAutoRestock = tk.Checkbutton(leftFrame,command=self.auto_restock,variable=self.activate_auto_restock)
+        activateAutoRestock = tk.Checkbutton(leftFrame,command=self.controller.auto_restock,variable=self.model.activate_auto_restock)
         activateAutoRestock.pack(side=tk.RIGHT)
         
         self.console = tk.Text(rightFrame, width=int(430*self.scale))
@@ -172,7 +66,7 @@ class Boghandelen(tk.Frame):
         lbl1 = tk.Label(topLeftFrame, text='Vælg kategori', width=int(70*self.scale), padx=10)
         lbl1.pack(side = tk.LEFT)
         
-        self.categories = self.stock.get_itemGroup_list()
+        self.categories = self.model.stock.get_itemGroup_list()
         
         scrollbar_c = tk.Scrollbar(topLeftFrame, orient=tk.VERTICAL)
         self.lbCategories = tk.Listbox(topLeftFrame, yscrollcommand=scrollbar_c.set, height=5, width=int(200*self.scale))
@@ -208,36 +102,7 @@ class Boghandelen(tk.Frame):
         
         self.update_book_list(None)
     
-    def auto_restock(self):
-        if self.activate_auto_restock.get() == 1:
-            total = self.stock.get_total_item_count()
-            minimum = int(self.autoRestock.get())
-            
-            totalBought = 0
-            totalSpent = 0
-            
-            while total < minimum:
-                salesItem = self.stock.get_random_item()
-                
-                salesItem.stockCount += 1
-                t = self.get_transaction(Transaction.STOCK_PURCHASE)
-                
-                t.amount = salesItem.price
-                t.state = Transaction.ST_READY
-                
-                totalBought += 1
-                totalSpent += t.amount
-                
-                total += 1
-            
-            if totalBought > 0:
-                self.show_book_info(None)
-                self.update_economy()
-                
-                if totalBought != 1:
-                    self.log_message('Auto indkøb, ' + str(totalBought) + ' bøger købt, kostede ' + str(totalSpent) + ' kr\n')
-                else:
-                    self.log_message('Auto indkøb, ' + str(totalBought) + ' bog købt, kostede ' + str(totalSpent) + ' kr\n')
+    
     
     def purchase_current(self):
         def confirm_purchase():
@@ -246,22 +111,21 @@ class Boghandelen(tk.Frame):
             #Add the items to the stock
             salesItem.stockCount += n
             #Make a transaction to subtract the price
-            t = self.get_transaction(Transaction.STOCK_PURCHASE)
+            t = self.model.get_transaction(Transaction.STOCK_PURCHASE)
             
             t.amount = n * salesItem.price
             t.state = Transaction.ST_READY
             
             #Update the GUI
-            
             self.show_book_info(None)
-            self.update_economy()
+            self.controller.update_economy()
             
             #Close the dialog
             dlg.destroy()
         
         sel = self.lbBooks.curselection()
         if len(sel) > 0:
-            salesItem = self.stock.find_sales_item(self.lbBooks.get(sel[0])[1])
+            salesItem = self.model.stock.find_sales_item(self.lbBooks.get(sel[0])[1])
             if salesItem is not None:
                 dlg = tk.Toplevel(height=200, width=200)
                 dlg.title('Bestil bøger')
@@ -317,33 +181,16 @@ class Boghandelen(tk.Frame):
             sel = employeeList.curselection()
             if len(sel) > 0:
                 id = int(employeeList.get(sel[0]).split(':')[0])
-                employee = self.get_employee_by_id(id)
-                # Kan godt regne med at den altid retunerer en ansat, men tjekker alligevel.
-                if employee == None:
-                    return self.error('Kunne ikke finde den ansatte')
-                           
                 salary = salaryVar.get()
-                if salary == '':
-                    return self.error('Løn er ikke intastet')
-            
-                try:
-                    salary = int(salary)
-                except ValueError:
-                        return self.error('Løn er ikke en talværdi')
-            
-                if salary < 0:
-                    return self.error('Løn må ikke være mindre end 0')
-                
-                employee.salary = salary
-                dlg.destroy()
-    
+                self.controller.validate_update_employee(dlg, id, salary)
+        
         hide_info()
         
         def show_info(env):
             sel = employeeList.curselection()
             if len(sel) > 0:
                 id = int(employeeList.get(sel[0]).split(':')[0])
-                employee = self.get_employee_by_id(id)
+                employee = self.model.get_employee_by_id(id)
                 # Kan godt regne med at den altid retunerer en ansat, men tjekker alligevel.
                 if employee == None:
                     return self.error('Kunne ikke finde den ansatte')
@@ -364,7 +211,7 @@ class Boghandelen(tk.Frame):
                 totalSalaryValueLbl.grid(row=5,column=2)
         
         employeeList.bind('<<ListboxSelect>>', show_info)
-        for employee in self.employees:
+        for employee in self.model.employees:
             employeeList.insert(tk.END, str(employee.employeeId) + ':' + employee.name)
         
         employeeList.grid(row=1,column=1,columnspan=2,sticky='N E W')
@@ -374,47 +221,10 @@ class Boghandelen(tk.Frame):
         cancelBtn.grid(row=6,column=2,sticky='E')
         dlg.mainloop()
     
-    def get_employee_by_id(self, employeeId):
-        for employee in self.employees:
-            if employee.employeeId == employeeId:
-                return employee
-        
-        return None
-        
-    def update_employee_information(self, evt):
-        sel = self.lbCategories.curselection()
-        if len(sel) > 0:
-            group = self.lbCategories.get(sel[0])
-            titles = self.stock.get_item_list(group)
-            self.lbBooks.delete(0,tk.END)
-            for t in titles:
-                self.lbBooks.insert(tk.END, t)
-    
     def add_employee(self):
-        def confirm():
-            name = nameEntry.get()
-            if name == '':
-                return self.error('Navn er ikke intastet')
-            if any(char.isdigit() for char in name):
-                return self.error('Ikke et validt navn')
-                
-            salary = saleryEntry.get()
-            if salary == '':
-                return self.error('Løn er ikke intastet')
-            
-            try:
-                salary = int(salary)
-            except ValueError:
-                return self.error('Løn er ikke en talværdi')
-            
-            if salary < 0:
-                return self.error('Løn må ikke være mindre end 0')
-            
-            employee = Employee(name, salary)
-            
-            self.employees.append(employee)
-            dlg.destroy()
-        
+        def do():
+             name, salary = (nameEntry.get(), salaryEntry.get())
+             self.controller.validate_new_employee(dlg, name, salary)
         dlg = tk.Toplevel()
         dlg.grid()
         dlg.title('Tilføj ansatte')
@@ -422,34 +232,44 @@ class Boghandelen(tk.Frame):
         nameLbl.grid(row=1, column=1)
         nameEntry = tk.Entry(dlg)
         nameEntry.grid(row=1, column=2)
-        saleryLbl = tk.Label(dlg, text='Løn: ')
-        saleryLbl.grid(row=2, column=1)
-        saleryEntry = tk.Entry(dlg)
-        saleryEntry.insert(0, '0')
-        saleryEntry.grid(row=2, column=2)
-        addBtn = tk.Button(dlg, text='Tilføj', command=confirm)
+        salaryLbl = tk.Label(dlg, text='Løn: ')
+        salaryLbl.grid(row=2, column=1)
+        salaryEntry = tk.Entry(dlg)
+        salaryEntry.insert(0, '0')
+        salaryEntry.grid(row=2, column=2)
+       
+        addBtn = tk.Button(dlg, text='Tilføj', command=do)
         addBtn.grid(row=3, column=2)
     
     def show_book_info(self, evt):
         sel = self.lbBooks.curselection()
         if len(sel) > 0:
-            salesItem = self.stock.find_sales_item(self.lbBooks.get(sel[0])[1])
+            salesItem = self.model.stock.find_sales_item(self.lbBooks.get(sel[0])[1])
             self.lblBookTitle.config(text='Titel: ' + salesItem.name)
             self.lblBookPrice.config(text='Pris: {}'.format(salesItem.price))
             self.lblBookCount.config(text='Antal på lager: {}'.format(salesItem.stockCount))
             self.lblBookSales.config(text='Antal solgt: {}'.format(salesItem.sales))
             self.lblBookAuthor.config(text='Forfatter: {}'.format(salesItem.author))
 
-    def update_book_list(self, evt):
+    def update_employee_information(self, evt):
         sel = self.lbCategories.curselection()
         if len(sel) > 0:
             group = self.lbCategories.get(sel[0])
-            titles = self.stock.get_item_list(group)
+            titles = self.model.stock.get_item_list(group)
             self.lbBooks.delete(0,tk.END)
             for t in titles:
                 self.lbBooks.insert(tk.END, t)
                 
-app = Boghandelen()
+    def update_book_list(self, evt):
+        sel = self.lbCategories.curselection()
+        if len(sel) > 0:
+            group = self.lbCategories.get(sel[0])
+            titles = self.model.stock.get_item_list(group)
+            self.lbBooks.delete(0,tk.END)
+            for t in titles:
+                self.lbBooks.insert(tk.END, t)
+                
+app = View()
 
 app.master.title('Boghandelen')
 

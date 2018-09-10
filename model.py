@@ -1,0 +1,66 @@
+# -*- coding: utf-8 -*-
+import tkinter as tk
+from stock import Stock
+from transaction import Transaction
+from employee import Employee
+
+class Model():
+    def __init__(self):
+        
+        self.accounting = []
+        
+        self.stock = Stock()
+        self.stock.build_initial_stock()
+
+        self.markup = tk.DoubleVar()
+        self.markup.set(1.3)
+        
+        self.employees = []
+        #Add two initial employees
+        e1 = Employee("John", 500)
+        self.employees.append(e1)
+        e2 = Employee("Jane", 500)
+        self.employees.append(e2)
+
+        self.activate_auto_restock = tk.IntVar()
+
+    #This function acts as a transaction factory
+    #All transactions should come from here,
+    #to ensure correct processing
+    def get_transaction(self, transactiontype, amount = 0):
+        t = Transaction(transactiontype, amount)
+        self.accounting.append(t)
+        return t
+
+    def get_total_accounting_value(self):
+        value = 0
+        for a in self.accounting:
+            if a.state == Transaction.ST_COMPLETE:
+                if a.transactionType == Transaction.CUSTOMER_PURCHASE:
+                    #Customer purchases are added to the value
+                    value += a.amount
+                elif a.transactionType == Transaction.EMPLOYEE_SALARY:
+                    #Salaries are subtracted
+                    value -= a.amount
+                elif a.transactionType == Transaction.CUSTOMER_RETURN:
+                    #Returns are also subtracted
+                    value -= a.amount
+                elif a.transactionType == Transaction.STOCK_PURCHASE:
+                    #Stock purchases are also subtracted
+                    value -= a.amount
+        return value
+
+    def add_employee(self, name, salary):
+        employee = Employee(name, salary)
+        self.employees.append(employee)
+    
+    def update_employee(self, employee, salary):
+        employee.salary = salary
+
+    def get_employee_by_id(self, employeeId):
+        for employee in self.employees:
+            if employee.employeeId == employeeId:
+                return employee
+        return None
+    
+    
