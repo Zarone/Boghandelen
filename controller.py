@@ -92,13 +92,9 @@ class Controller():
         self.model.add_employee(name, salary)
         dlg.destroy()
     
-    def validate_update_employee(self, dlg, id,salary):
-        employee = self.model.get_employee_by_id(id)
-        # Kan godt regne med at den altid retunerer en ansat, men tjekker alligevel.
-        if employee == None:
-            return self.view.error('Kunne ikke finde den ansatte')
+    def validate_update_employee(self, dlg, id, salary):
         
-        self.model.update_employee(employee, salary)
+        # Kan godt regne med at den altid retunerer en ansat, men tjekker alligevel.
         if salary == '':
             return self.view.error('Løn er ikke intastet')
     
@@ -110,7 +106,7 @@ class Controller():
         if salary < 0:
             return self.view.error('Løn må ikke være mindre end 0')
         
-        self.model.update_employee(employee, salary)
+        self.model.update_employee(id, salary)
         dlg.destroy()
     
     def auto_restock(self):

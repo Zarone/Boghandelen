@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import tkinter as tk
 from transaction import Transaction
-from fpdf import FPDF
 from model import Model
 from controller import Controller
 
@@ -39,11 +38,14 @@ class View(tk.Frame):
         topInfoFrame = tk.Frame(topFrame)
         topInfoFrame.pack(side=tk.BOTTOM)
         
+        
         #Left buttonpanel
         btnShowEmployees = tk.Button(leftFrame, text='Vis ansatte', command=self.show_employees, width=int(70*self.scale))
         btnShowEmployees.pack(fill = tk.X)
         btnAddEmployees = tk.Button(leftFrame, text='Tilføj ansatte', command=self.add_employee, width=int(70*self.scale))
         btnAddEmployees.pack(fill = tk.X)
+        exportTransBtn = tk.Button(leftFrame, text="Exporter transaktioner", command=self.model.export_transactions)
+        exportTransBtn.pack(fill=tk.X)
         self.lblMoney = tk.Label(leftFrame, text='Aktuel bundlinje: {}'.format(self.model.get_total_accounting_value()))
         self.lblMoney.pack(fill=tk.X)
         self.lblTotalBookCount = tk.Label(leftFrame, text='Antal bøger på lager: {}'.format(self.model.stock.get_total_item_count()))
@@ -52,6 +54,8 @@ class View(tk.Frame):
         self.slMarkup = tk.Scale(leftFrame, label=None, resolution=0.1, orient=tk.HORIZONTAL, from_=0, to=2, variable=self.model.markup)
         self.slMarkup.pack(fill = tk.X)
         
+        
+        
         restockLbl = tk.Label(leftFrame, text='Auto indkøb')
         restockLbl.pack(fill=tk.X)
         self.autoRestock = tk.Spinbox(leftFrame, from_=1, to=10000)
@@ -59,6 +63,8 @@ class View(tk.Frame):
         
         activateAutoRestock = tk.Checkbutton(leftFrame,command=self.controller.auto_restock,variable=self.model.activate_auto_restock)
         activateAutoRestock.pack(side=tk.RIGHT)
+        
+        
         
         self.console = tk.Text(rightFrame, width=int(430*self.scale))
         self.console.pack()

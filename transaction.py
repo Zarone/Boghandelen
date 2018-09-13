@@ -21,9 +21,22 @@ class Transaction:
         self.state = self.ST_WAITING
         self.transactionId = self.get_next_id()
         self.amount = amount
-       
+    
+    def get_type(self):
+        if self.transactionType == 1:
+            return "CUSTOMER_PURCHASE"
+        elif self.transactionType == 2:
+            return "EMPLOYEE_SALARY"
+        elif self.transactionType == 3:
+            return "STOCK_PURCHASE"
+        elif self.transactionType == 4:
+            return "CUSTOMER_RETURN"
+        else:
+            return "Invalid type"
+    
     @classmethod    
     def get_next_id(cls):
         cls.ID_COUNT += 1
         return cls.ID_COUNT
+    
     

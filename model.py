@@ -3,6 +3,7 @@ import tkinter as tk
 from stock import Stock
 from transaction import Transaction
 from employee import Employee
+from fpdf import FPDF
 
 class Model():
     def __init__(self):
@@ -54,13 +55,27 @@ class Model():
         employee = Employee(name, salary)
         self.employees.append(employee)
     
-    def update_employee(self, employee, salary):
-        employee.salary = salary
-
+    def update_employee(self, id, salary):
+        employee = self.get_employee_by_id(id)
+        assert employee is not None
+        if employee != None:
+            employee.salary = salary
+    
     def get_employee_by_id(self, employeeId):
         for employee in self.employees:
             if employee.employeeId == employeeId:
                 return employee
         return None
+    
+    def export_transactions(self):
+        pdf = FPDF()
+        pdf.alias_nb_pages()
+        pdf.add_page()
+        pdf.set_font('Arial', '', 12)
+        for i, trans in enumerate(self.accounting):
+            
+            output = 'Id: ' + str(trans.transactionId) + ' | Type: ' + str(trans.get_type()) + ' | Beløb: ' + str(trans.amount)
+            pdf.cell(1,10, output, 0, 1)
+        pdf.output('transaktioner.pdf')
     
     

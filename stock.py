@@ -88,7 +88,7 @@ class Stock:
                 except:
                     pass
                 
-                descripion = None
+                description = None
                 try:
                     description = ast.literal_eval(book['desc'].replace('=>', ':'))['Description']
                 except:
