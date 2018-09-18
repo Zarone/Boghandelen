@@ -274,9 +274,3 @@ class View(tk.Frame):
             self.lbBooks.delete(0,tk.END)
             for t in titles:
                 self.lbBooks.insert(tk.END, t)
-                
-app = View()
-
-app.master.title('Boghandelen')
-
-app.mainloop()
